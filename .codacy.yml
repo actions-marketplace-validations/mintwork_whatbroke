@@ -1,0 +1,7 @@
+# Codacy: paths that don't ship to users.
+# - examples/: copy-paste workflows for users, on the action's moving @v0 tag.
+# - bench/: the benchmark's job lists and ground truth.
+exclude_paths:
+  - "examples/**"
+  - "bench/**"
+  - "scripts/demo-gif.mjs"

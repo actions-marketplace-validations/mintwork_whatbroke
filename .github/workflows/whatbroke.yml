@@ -15,4 +15,8 @@ jobs:
     if: github.event.workflow_run.conclusion == 'failure'
     runs-on: ubuntu-26.04
     steps:
-      - uses: mintwork/whatbroke@v0
+      # This repo's own action.yml (from main), so there's no tag or SHA to pin.
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: ./
