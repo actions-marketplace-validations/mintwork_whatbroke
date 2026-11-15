@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2
+
+- No permission to comment (runs started by Dependabot get a read-only token) is no longer an
+  error: whatbroke says so, keeps the result in the output and the job summary, and exits 0.
+  A rate limit, which GitHub also answers with 403, still fails visibly.
+
 ## 0.1.1
 
 - A matrix failing the same way is shown once, with "Same failure in N more jobs" (found in a live

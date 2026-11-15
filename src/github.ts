@@ -37,6 +37,8 @@ export class GitHubError extends Error {
   constructor(
     readonly status: number,
     message: string,
+    /** GitHub answers 403 (or 429) for rate limits too; those aren't permission problems. */
+    readonly rateLimited = false,
   ) {
     super(message);
   }
@@ -82,6 +84,10 @@ export class GitHub {
     });
     if (!res.ok) {
       const body = (await res.text()).slice(0, 200);
+      const rateLimited =
+        res.status === 429 ||
+        res.headers.get('x-ratelimit-remaining') === '0' ||
+        /rate limit/i.test(body);
       const hint =
         res.status === 401 || (res.status === 403 && !this.token)
           ? ' Set GITHUB_TOKEN, or log in with `gh auth login`.'
@@ -91,6 +97,7 @@ export class GitHub {
       throw new GitHubError(
         res.status,
         `GitHub ${init.method ?? 'GET'} ${path}: ${res.status} ${body}${hint}`,
+        rateLimited,
       );
     }
     return res;
