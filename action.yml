@@ -1,0 +1,49 @@
+name: whatbroke
+description: When CI fails, comment on the PR with only the log lines that weren't in the last passing run.
+author: mintwork
+branding:
+  icon: search
+  color: green
+inputs:
+  run-id:
+    description: >-
+      The failed workflow run to explain. Defaults to the run that triggered a `workflow_run`
+      event, or else the current run.
+    default: ""
+  lines:
+    description: Most log lines to show per failed job
+    default: "40"
+  comment:
+    description: Post (or update) a comment on the run's pull request ("true"/"false")
+    default: "true"
+  summary:
+    description: Add the result to this job's summary ("true"/"false")
+    default: "true"
+  token:
+    description: "Token with `actions: read` (and `pull-requests: write` to comment)"
+    default: ${{ github.token }}
+  version:
+    description: >-
+      whatbroke npm version to run. Defaults to the version of the action ref you use
+      (e.g. @v0.1.0 runs whatbroke@0.1.0), so pinning the action pins the CLI.
+    default: ""
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
+        WB_RUN: ${{ inputs.run-id || github.event.workflow_run.id || github.run_id }}
+        WB_LINES: ${{ inputs.lines }}
+        WB_COMMENT: ${{ inputs.comment }}
+        WB_SUMMARY: ${{ inputs.summary }}
+        WB_VERSION: ${{ inputs.version }}
+      run: |
+        if [ -z "$WB_VERSION" ]; then
+          WB_VERSION=$(node -p 'require(process.argv[1]).version' "$GITHUB_ACTION_PATH/package.json")
+        fi
+        args=("$WB_RUN" --repo "$GITHUB_REPOSITORY" --lines "$WB_LINES")
+        [ "$WB_COMMENT" = "true" ] && args+=(--comment)
+        [ "$WB_SUMMARY" = "true" ] && args+=(--summary)
+        echo "Running @mintwork/whatbroke@${WB_VERSION} on run ${WB_RUN}"
+        npx --yes "@mintwork/whatbroke@${WB_VERSION}" "${args[@]}"

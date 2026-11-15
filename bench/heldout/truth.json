@@ -1,0 +1,48 @@
+{
+  "00": ["code", "expected 200 to be 404"],
+  "01": ["code", "error TS2304: Cannot find name 'vi'"],
+  "02": ["code", "wrong amount of left-padding spaces"],
+  "03": [
+    "flaky",
+    "FAIL .*schedules rerun when updating deeply nested value|Error: Test timed out in 30000ms"
+  ],
+  "04": [
+    "flaky",
+    "FAIL .*schedules rerun when updating deeply nested value|Error: Test timed out in 30000ms"
+  ],
+  "05": ["code", "error TS2532: Object is possibly 'undefined'"],
+  "06": [
+    "code",
+    "Snapshot `import durations > should print import breakdown.* mismatched|FAIL .*import-durations\\.test\\.ts"
+  ],
+  "07": [
+    "flaky",
+    "The firefox page crashed|FAIL +specs/user-event-hover\\.test\\.ts|Snapshot `user-event-hover 1` mismatched"
+  ],
+  "08": ["flaky", "Failed to connect to the browser session|FAIL +specs/seeded-timers\\.test\\.ts"],
+  "15": ["code", "CssSyntaxError: Missing opening \\("],
+  "16": [
+    "infra",
+    "401 Unauthorized - PUT https://registry\\.npmjs\\.org/tailwindcss|token is invalid"
+  ],
+  "17": ["code", "invalid semver: 0\\.0\\.0-insiders"],
+  "18": ["code", "reproduction_log must describe gh, not the test backend"],
+  "19": ["other", "Agent reported that it could not complete the task|report_incomplete"],
+  "20": ["infra", "nodename nor servname provided|Failed to download action"],
+  "21": ["code", "--- FAIL: TestTrimBOM|\\.Site\\.Data was deprecated"],
+  "22": ["code", "--- FAIL: TestTrimBOM|\\.Site\\.Data was deprecated"],
+  "23": ["code", "--- FAIL: TestTrimBOM|\\.Site\\.Data was deprecated"],
+  "24": ["code", "Diff in .*eval_file\\.rs"],
+  "25": ["code", "Diff in .*repl\\.rs"],
+  "26": ["code", "list_to_scalar_suggests_spread_operator"],
+  "28": [
+    "infra",
+    "RemoteDisconnected|Connection aborted|FAILED tests/integration/test_utils_vcs_git\\.py"
+  ],
+  "29": ["code", "error: Function is missing a type annotation"],
+  "30": ["flaky", "FAIL chromium ›|Error: page\\.waitForSelector: Test timeout"],
+  "31": ["infra", "has timed out after 30 minutes"],
+  "32": ["infra", "has timed out after 30 minutes"],
+  "34": ["code", "error TS2339: Property '_setNodeHTTPSSecureContext'"],
+  "35": ["other", "Autofix task started"]
+}

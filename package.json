@@ -1,0 +1,65 @@
+{
+  "name": "@mintwork/whatbroke",
+  "version": "0.1.0",
+  "description": "Why did CI fail? Shows only the log lines that weren't in the last passing run. For PR comments, terminals and coding agents.",
+  "keywords": [
+    "ci",
+    "github-actions",
+    "logs",
+    "log-diff",
+    "debugging",
+    "flaky-tests",
+    "coding-agents",
+    "cli"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mintwork/whatbroke.git"
+  },
+  "homepage": "https://github.com/mintwork/whatbroke#readme",
+  "bugs": {
+    "url": "https://github.com/mintwork/whatbroke/issues"
+  },
+  "type": "module",
+  "bin": {
+    "whatbroke": "dist/bin.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm run lint && npm test",
+    "bench": "npm run build && node scripts/bench.mjs",
+    "prepublishOnly": "npm run clean && npm run build",
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\""
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.6.7",
+    "@types/node": "^22.20.5",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

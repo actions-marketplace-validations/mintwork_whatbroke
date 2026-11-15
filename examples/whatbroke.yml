@@ -1,0 +1,22 @@
+# .github/workflows/whatbroke.yml
+# When the CI workflow fails, comment on the pull request with what broke.
+#
+# It runs as a separate workflow (workflow_run), so it also works for pull requests from forks:
+# it never checks out their code, it only reads the failed run's logs.
+name: whatbroke
+
+on:
+  workflow_run:
+    workflows: [CI] # the name of the workflow(s) to explain
+    types: [completed]
+
+permissions:
+  actions: read # read the job logs
+  pull-requests: write # comment on the PR
+
+jobs:
+  explain:
+    if: github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: mintwork/whatbroke@v0
