@@ -1,0 +1,18 @@
+# Dogfood: when CI fails, whatbroke explains the failure on the pull request.
+name: whatbroke
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions:
+  actions: read
+  pull-requests: write
+
+jobs:
+  explain:
+    if: github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: mintwork/whatbroke@v0
