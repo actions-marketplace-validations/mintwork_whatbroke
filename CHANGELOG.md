@@ -5,7 +5,6 @@
 - A matrix failing the same way is shown once, with "Same failure in N more jobs" (found in a live
   test: six identical failures made six copies of the same block in the PR comment).
 - Up to 8 failed jobs per run are analyzed (was 5).
-- Infrastructure rules ignore error text quoted in printed files and diffs.
 
 ## 0.1.0
 
