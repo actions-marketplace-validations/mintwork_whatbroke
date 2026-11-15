@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { analyze } from '../src/core/analyze.js';
-import { COMMENT_MARKER, formatAgent, formatMarkdown } from '../src/format.js';
+import { COMMENT_MARKER, formatAgent, formatMarkdown, groupSameFailures } from '../src/format.js';
 import {
   findBaseline,
   GitHub,
@@ -171,5 +171,39 @@ describe('formats', () => {
     const text = formatAgent(reports);
     expect(text).toMatch(/^whatbroke: job "test @everyone" failed in step "npm test"/);
     expect(text).toContain('2: FAIL x.test.ts');
+  });
+});
+
+describe('groupSameFailures', () => {
+  const log = (node: string) =>
+    [
+      '##[group]Run npm test',
+      `node ${node}`,
+      'FAIL a.test.ts',
+      'AssertionError: expected 1 to be 2',
+      '##[error]Process completed with exit code 1.',
+    ].join('\n');
+  const passing = '##[group]Run npm test';
+
+  it('shows a matrix failing the same way once', () => {
+    const reports = ['22', '24', '26'].map((n) => ({
+      name: `test (node ${n})`,
+      analysis: analyze(log(n), passing),
+    }));
+    const grouped = groupSameFailures(reports);
+    expect(grouped).toHaveLength(1);
+    expect(grouped[0].sameAs?.map((j) => j.name)).toEqual(['test (node 24)', 'test (node 26)']);
+    expect(formatMarkdown(grouped)).toContain('### whatbroke: 3 jobs failed');
+    expect(formatMarkdown(grouped)).toContain('Same failure in 2 more jobs');
+  });
+
+  it('keeps different failures apart', () => {
+    const other =
+      '##[group]Run npm test\nFAIL b.test.ts\nTypeError: x is undefined\n##[error]Process completed with exit code 1.';
+    const grouped = groupSameFailures([
+      { name: 'a', analysis: analyze(log('22'), passing) },
+      { name: 'b', analysis: analyze(other, passing) },
+    ]);
+    expect(grouped).toHaveLength(2);
   });
 });

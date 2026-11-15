@@ -1,5 +1,6 @@
 // Turning an analysis into text: for a terminal, a PR comment (Markdown), JSON, or a coding agent.
 import type { Analysis, Block } from './core/analyze.js';
+import { mask } from './core/mask.js';
 
 export interface JobReport {
   name: string;
@@ -7,7 +8,39 @@ export interface JobReport {
   analysis: Analysis;
   /** The passing run compared against, if any. */
   baseline?: { url: string; sha: string; branch: string };
+  /** Other jobs that failed the same way (a matrix), shown once under this one. */
+  sameAs?: { name: string; url?: string }[];
 }
+
+/**
+ * Matrix jobs often fail with the same error. Jobs whose top block reads the same (after masking)
+ * are shown once, with the others listed under it.
+ */
+export function groupSameFailures(reports: JobReport[]): JobReport[] {
+  const out: JobReport[] = [];
+  const bySignature = new Map<string, JobReport>();
+  for (const r of reports) {
+    const top = r.analysis.blocks[0];
+    const signature = top
+      ? top.lines
+          .filter((l) => !l.context)
+          .slice(0, 8)
+          .map((l) => mask(l.text))
+          .join('\n')
+      : '';
+    const first = signature ? bySignature.get(signature) : undefined;
+    if (first) {
+      first.sameAs = [...(first.sameAs ?? []), { name: r.name, url: r.url }];
+      continue;
+    }
+    if (signature) bySignature.set(signature, r);
+    out.push(r);
+  }
+  return out;
+}
+
+const totalJobs = (reports: JobReport[]) =>
+  reports.reduce((n, r) => n + 1 + (r.sameAs?.length ?? 0), 0);
 
 export const COMMENT_MARKER = '<!-- whatbroke -->';
 
@@ -57,6 +90,11 @@ export function formatText(reports: JobReport[], opts: { color?: boolean } = {})
     out.push(
       `  ${c.dim(summaryLine(r))}${r.baseline ? c.dim(` (${r.baseline.sha.slice(0, 7)} on ${r.baseline.branch})`) : ''}`,
     );
+    if (r.sameAs?.length) {
+      out.push(
+        `  ${c.dim(`Same failure in ${plural(r.sameAs.length, 'more job')}: ${r.sameAs.map((j) => j.name).join(', ')}`)}`,
+      );
+    }
     if (a.infra) {
       out.push(`  ${c.yellow('!')} Looks like infrastructure: ${a.infra.kind}. ${a.infra.advice}`);
     }
@@ -92,7 +130,7 @@ const code = (s: string, max = 80) =>
 const inline = (s: string) => s.replace(/[\\`*_[\]<>#|@!~]/g, (ch) => `\\${ch}`);
 
 export function formatMarkdown(reports: JobReport[], opts: { runUrl?: string } = {}): string {
-  const failed = reports.length;
+  const failed = totalJobs(reports);
   const out = [COMMENT_MARKER, `### whatbroke: ${plural(failed, 'job')} failed`];
   if (opts.runUrl) out.push('', `[Workflow run](${opts.runUrl})`);
   for (const r of reports) {
@@ -104,6 +142,10 @@ export function formatMarkdown(reports: JobReport[], opts: { runUrl?: string } =
     out.push(
       `Failed${a.failingStep ? ` in ${code(a.failingStep)}` : ''}. ${inline(summaryLine(r))}${base}.`,
     );
+    if (r.sameAs?.length) {
+      const links = r.sameAs.map((j) => (j.url ? `[${inline(j.name)}](${j.url})` : inline(j.name)));
+      out.push('', `Same failure in ${plural(r.sameAs.length, 'more job')}: ${links.join(', ')}.`);
+    }
     if (a.infra)
       out.push('', `> **Looks like infrastructure:** ${inline(a.infra.kind)}. ${a.infra.advice}`);
     for (const b of a.blocks) {
@@ -137,6 +179,10 @@ export function formatAgent(reports: JobReport[]): string {
     out.push(
       `whatbroke: job "${r.name}" failed${a.failingStep ? ` in step "${a.failingStep}"` : ''}. ${summaryLine(r)}${base}.`,
     );
+    if (r.sameAs?.length)
+      out.push(
+        `Same failure in ${plural(r.sameAs.length, 'more job')}: ${r.sameAs.map((j) => j.name).join(', ')}.`,
+      );
     if (a.infra)
       out.push(`Likely infrastructure (${a.infra.kind}), not the code. ${a.infra.advice}`);
     for (const b of a.blocks) {

@@ -9,6 +9,7 @@ import {
   formatJson,
   formatMarkdown,
   formatText,
+  groupSameFailures,
   type JobReport,
 } from './format.js';
 import {
@@ -44,7 +45,7 @@ Usage
 
 Options
   --repo <owner/name>   repository (default: the origin remote of the current directory)
-  --job <name>          only this job (default: every failed job, up to 5)
+  --job <name>          only this job (default: every failed job, up to 8)
   --lines <n>           lines to show per job (default: 40)
   --format <f>          text (default), markdown or json
   --agent               compact plain text for coding agents
@@ -57,6 +58,9 @@ Auth: GITHUB_TOKEN, GH_TOKEN, or your \`gh\` login. Reading logs needs the actio
 `;
 
 class UsageError extends Error {}
+
+/** Failed jobs analyzed per run (each costs a log download and a search for its passing run). */
+const MAX_JOBS = 8;
 
 function git(...args: string[]): string | undefined {
   try {
@@ -118,7 +122,7 @@ async function analyzeRun(
     );
   }
   const reports: JobReport[] = [];
-  for (const job of jobs.slice(0, 5)) {
+  for (const job of jobs.slice(0, MAX_JOBS)) {
     const log = await gh.jobLog(repo, job.id);
     const base = await findBaseline(gh, repo, run, job, log).catch(() => undefined);
     const analysis = analyze(log, base?.log, { maxLines: opts.lines });
@@ -134,7 +138,9 @@ async function analyzeRun(
         : undefined,
     });
   }
-  return reports;
+  if (jobs.length > MAX_JOBS)
+    process.stderr.write(`whatbroke: ${jobs.length - MAX_JOBS} more failed jobs not analyzed\n`);
+  return groupSameFailures(reports);
 }
 
 export async function main(argv: string[]): Promise<number> {

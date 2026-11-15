@@ -100,15 +100,15 @@ of reading the full job log.
 
 ## Options
 
-| Option              | What it does                                                     | Default                    |
-| ------------------- | ---------------------------------------------------------------- | -------------------------- |
-| `--repo owner/name` | which repository                                                 | the `origin` remote        |
-| `--job <name>`      | only this job                                                    | every failed job (up to 5) |
-| `--lines <n>`       | most lines to show per job                                       | 40                         |
-| `--format <f>`      | `text`, `markdown` or `json`                                     | `text`                     |
-| `--agent`           | compact plain text for coding agents                             |                            |
-| `--comment`         | post or update the result as a comment on the run's pull request |                            |
-| `--summary`         | append the result to the GitHub Actions job summary              |                            |
+| Option              | What it does                                                     | Default                                                                 |
+| ------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `--repo owner/name` | which repository                                                 | the `origin` remote                                                     |
+| `--job <name>`      | only this job                                                    | every failed job (up to 8); a matrix failing the same way is shown once |
+| `--lines <n>`       | most lines to show per job                                       | 40                                                                      |
+| `--format <f>`      | `text`, `markdown` or `json`                                     | `text`                                                                  |
+| `--agent`           | compact plain text for coding agents                             |                                                                         |
+| `--comment`         | post or update the result as a comment on the run's pull request |                                                                         |
+| `--summary`         | append the result to the GitHub Actions job summary              |                                                                         |
 
 ## How it works
 
