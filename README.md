@@ -6,7 +6,7 @@
 
 For PR comments, your terminal, and coding agents. No AI, no setup, a few seconds.
 
-[![CI](https://github.com/mintwork/whatbroke/actions/workflows/ci.yml/badge.svg)](https://github.com/mintwork/whatbroke/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/@mintwork/whatbroke?color=cb3837&logo=npm&label=npm)](https://www.npmjs.com/package/@mintwork/whatbroke) [![npm provenance](https://img.shields.io/badge/provenance-signed-7EE2B8?labelColor=0D1714&logo=sigstore&logoColor=white)](https://www.npmjs.com/package/@mintwork/whatbroke#provenance) [![zero dependencies](https://img.shields.io/badge/runtime%20deps-0-7EE2B8?labelColor=0D1714)](package.json) [![license: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![CI](https://github.com/mintwork/whatbroke/actions/workflows/ci.yml/badge.svg)](https://github.com/mintwork/whatbroke/actions/workflows/ci.yml) [![Codacy grade](https://app.codacy.com/project/badge/Grade/33c27cac59094595bd3ddb1e195fc71f)](https://app.codacy.com/gh/mintwork/whatbroke/dashboard) [![npm](https://img.shields.io/npm/v/@mintwork/whatbroke?color=cb3837&logo=npm&label=npm)](https://www.npmjs.com/package/@mintwork/whatbroke) [![npm provenance](https://img.shields.io/badge/provenance-signed-7EE2B8?labelColor=0D1714&logo=sigstore&logoColor=white)](https://www.npmjs.com/package/@mintwork/whatbroke#provenance) [![zero dependencies](https://img.shields.io/badge/runtime%20deps-0-7EE2B8?labelColor=0D1714)](package.json) [![license: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 ```bash
 npx -y @mintwork/whatbroke
