@@ -8,23 +8,13 @@ For PR comments, your terminal, and coding agents. No AI, no setup, a few second
 
 [![CI](https://github.com/mintwork/whatbroke/actions/workflows/ci.yml/badge.svg)](https://github.com/mintwork/whatbroke/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/@mintwork/whatbroke?color=cb3837&logo=npm&label=npm)](https://www.npmjs.com/package/@mintwork/whatbroke) [![npm provenance](https://img.shields.io/badge/provenance-signed-7EE2B8?labelColor=0D1714&logo=sigstore&logoColor=white)](https://www.npmjs.com/package/@mintwork/whatbroke#provenance) [![zero dependencies](https://img.shields.io/badge/runtime%20deps-0-7EE2B8?labelColor=0D1714)](package.json) [![license: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
+```bash
+npx -y @mintwork/whatbroke
+```
+
 </div>
 
-```
-$ npx -y @mintwork/whatbroke https://github.com/astral-sh/ruff/actions/runs/43729512428/job/132858629404
-
-✗ Compute diagnostic diff failed in "Compute diagnostic diff"
-  2,206 log lines, 111 lines new since the last passing run (6d0e8a8 on charlie/ty-fastapi-typed-dict-get)
-
-  # Build the executable for the old and new commit, line 2236
-    2236     Compiling ty_python_core v0.0.22 (/home/runner/work/ruff/ruff/ruff/crates/ty_python_core)
-    2237     Compiling ty_python_semantic v0.0.22 (/home/runner/work/ruff/ruff/ruff/crates/ty_python_semantic)
-    2238  error[E0599]: no method named `declared_type` found for struct `TypeContext<'db>` in the current scope
-    2239    --> crates/ty_python_semantic/src/types/infer/builder/typed_dict.rs:79:27
-    2240     |
-    2241  79 |         if result_context.declared_type().is_some() {
-    2242     |                           ^^^^^^^^^^^^^ method not found in `TypeContext<'db>`
-```
+<img src="docs/demo.gif" alt="The last 12 lines of ruff's failed CI log are only git cleanup; whatbroke on the same job shows the Rust compile error first, out of 2,206 lines; then the same result as a PR comment" width="900">
 
 A failed CI job is thousands of lines, and most of them were also in the last run that passed:
 the same deprecation warnings, download progress, cache misses, tests that passed. What broke is

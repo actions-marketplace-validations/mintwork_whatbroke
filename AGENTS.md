@@ -12,6 +12,7 @@ npm run build                     # tsc -> dist/
 node dist/bin.js --help
 node scripts/fetch-bench.mjs      # download the benchmark logs (GitHub token needed)
 npm run bench -- bench/tuning     # benchmark; also bench/heldout
+npm run demo:gif                  # docs/demo.gif from the real tool on bench data (Chrome + ffmpeg)
 ```
 
 ## Layout
