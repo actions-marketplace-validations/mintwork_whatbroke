@@ -123,6 +123,16 @@ describe('analyze', () => {
 });
 
 describe('infraHint', () => {
+  it('ignores error text quoted in printed files and diffs', () => {
+    expect(
+      infraHint([
+        '   4    │ - ··"04":·["infra",·"Could·not·resolve·host"],',
+        '+  "03": ["infra", "ENOTFOUND"],',
+        '   12 | throw new Error("ECONNRESET")',
+      ]),
+    ).toBeUndefined();
+  });
+
   it('is quiet for code failures', () => {
     expect(
       infraHint(['AssertionError: expected 1 to be 2', 'Error: Cannot find module ./x']),

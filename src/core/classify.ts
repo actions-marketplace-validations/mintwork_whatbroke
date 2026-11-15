@@ -68,8 +68,15 @@ const INFRA: [RegExp, string, string][] = [
   ],
 ];
 
+/**
+ * File contents being printed (a formatter's or linter's diff, a code frame, `diff -u` output):
+ * an error message quoted inside a file isn't the runner's trouble.
+ */
+const LISTING = /^\s*(?:\d+\s+)*(?:\d+\s*)?[│|]|^\s*[+-](?:\s|·)|^\s*@@ /;
+
 export function infraHint(lines: string[]): InfraHint | undefined {
   for (const line of lines) {
+    if (LISTING.test(line)) continue;
     for (const [rx, kind, advice] of INFRA)
       if (rx.test(line)) return { kind, advice, line: line.trim() };
   }
