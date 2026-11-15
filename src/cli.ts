@@ -232,7 +232,13 @@ export async function main(argv: string[]): Promise<number> {
         } catch (e) {
           // Runs triggered by Dependabot (and some fork setups) get a read-only token. The result
           // is still in the output and the job summary; that's no reason to fail the job.
-          if (!(e instanceof GitHubError) || (e.status !== 403 && e.status !== 404)) throw e;
+          // A rate limit (also a 403) is not a permission problem: let it fail visibly.
+          if (
+            !(e instanceof GitHubError) ||
+            e.rateLimited ||
+            (e.status !== 403 && e.status !== 404)
+          )
+            throw e;
           process.stderr.write(
             `whatbroke: not allowed to comment on #${pr} (${e.status}); the token needs pull-requests: write. Runs started by Dependabot only get a read-only token, so see the job summary instead.\n`,
           );

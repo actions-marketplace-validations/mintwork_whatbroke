@@ -9,7 +9,7 @@ const failedLog = [
 ].join('\n');
 
 /** A fake GitHub for one failed run on a PR, where writing comments is forbidden (a Dependabot run). */
-function stubGitHub(commentStatus: number) {
+function stubGitHub(commentStatus: number, commentHeaders: Record<string, string> = {}) {
   const routes: Record<string, unknown> = {
     '/repos/acme/api/actions/runs/50/jobs': {
       jobs: [
@@ -40,7 +40,12 @@ function stubGitHub(commentStatus: number) {
     vi.fn(async (url: string, init?: RequestInit) => {
       const path = String(url).replace('https://api.github.com', '');
       if (init?.method === 'POST')
-        return new Response('Resource not accessible by integration', { status: commentStatus });
+        return new Response(
+          commentHeaders['x-ratelimit-remaining'] === '0'
+            ? 'API rate limit exceeded'
+            : 'Resource not accessible by integration',
+          { status: commentStatus, headers: commentHeaders },
+        );
       const key = Object.keys(routes).find(
         (k) => path === k || path.startsWith(`${k}?`) || (k.includes('?') && path.startsWith(k)),
       );
@@ -72,5 +77,12 @@ describe('--comment without permission', () => {
     vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
     await expect(main(['50', '--repo', 'acme/api', '--comment'])).rejects.toThrow(/500/);
+  });
+
+  it('still fails on a rate limit, which GitHub also answers with 403', async () => {
+    stubGitHub(403, { 'x-ratelimit-remaining': '0' });
+    vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    await expect(main(['50', '--repo', 'acme/api', '--comment'])).rejects.toThrow(/rate limit/);
   });
 });
