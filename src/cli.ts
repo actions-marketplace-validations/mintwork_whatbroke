@@ -58,6 +58,8 @@ Auth: GITHUB_TOKEN, GH_TOKEN, or your \`gh\` login. Reading logs needs the actio
 `;
 
 class UsageError extends Error {}
+/** Not an error: a run with nothing to explain (it passed, or failed before any job ran). */
+class NothingToExplain extends Error {}
 
 /** Failed jobs analyzed per run (each costs a log download and a search for its passing run). */
 const MAX_JOBS = 8;
@@ -115,10 +117,12 @@ async function analyzeRun(
   if (only?.name)
     jobs = jobs.filter((j) => j.name === only.name || j.name.includes(only.name as string));
   if (jobs.length === 0) {
-    throw new UsageError(
+    if (only?.id || only?.name)
+      throw new UsageError(`No failed job matching that in run ${run.id}.`);
+    throw new NothingToExplain(
       run.conclusion === 'failure' || run.status !== 'completed'
-        ? `No failed jobs${only ? ' matching that' : ''} in run ${run.id} (yet).`
-        : `Run ${run.id} didn't fail (${run.conclusion ?? run.status}).`,
+        ? `Run ${run.id} has no failed jobs to explain${run.status === 'completed' ? ' (it failed before any job ran)' : ' yet'}.`
+        : `Run ${run.id} didn't fail (${run.conclusion ?? run.status}); nothing to explain.`,
     );
   }
   const reports: JobReport[] = [];
@@ -234,7 +238,13 @@ export async function run(argv: string[]): Promise<void> {
   try {
     process.exitCode = await main(argv);
   } catch (e) {
-    if (e instanceof UsageError || (e as { code?: string }).code?.startsWith('ERR_PARSE_ARGS')) {
+    if (e instanceof NothingToExplain) {
+      process.stderr.write(`whatbroke: ${e.message}\n`);
+      process.exitCode = 0;
+    } else if (
+      e instanceof UsageError ||
+      (e as { code?: string }).code?.startsWith('ERR_PARSE_ARGS')
+    ) {
       process.stderr.write(`whatbroke: ${(e as Error).message}\n`);
       process.exitCode = 2;
     } else if (e instanceof GitHubError) {

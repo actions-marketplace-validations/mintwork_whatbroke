@@ -44,6 +44,16 @@ const totalJobs = (reports: JobReport[]) =>
 
 export const COMMENT_MARKER = '<!-- whatbroke -->';
 
+/** Longest log line shown, in characters: minified or base64 lines would drown everything else. */
+const MAX_LINE = 400;
+/** GitHub rejects comments over 65,536 characters; stay well under. */
+const MAX_COMMENT = 60_000;
+
+const clip = (text: string) =>
+  text.length > MAX_LINE
+    ? `${text.slice(0, MAX_LINE)}… (${(text.length - MAX_LINE).toLocaleString('en-US')} more characters)`
+    : text;
+
 const plural = (n: number, word: string) =>
   `${n.toLocaleString('en-US')} ${word}${n === 1 ? '' : 's'}`;
 
@@ -101,7 +111,9 @@ export function formatText(reports: JobReport[], opts: { color?: boolean } = {})
     for (const b of a.blocks) {
       out.push('', `  ${c.cyan(blockTitle(b))}`);
       for (const l of b.lines)
-        out.push(`  ${c.dim(String(l.n).padStart(6))}  ${l.context ? c.dim(l.text) : l.text}`);
+        out.push(
+          `  ${c.dim(String(l.n).padStart(6))}  ${l.context ? c.dim(clip(l.text)) : clip(l.text)}`,
+        );
     }
     if (a.hiddenBlocks)
       out.push(
@@ -131,39 +143,61 @@ const inline = (s: string) => s.replace(/[\\`*_[\]<>#|@!~]/g, (ch) => `\\${ch}`)
 
 export function formatMarkdown(reports: JobReport[], opts: { runUrl?: string } = {}): string {
   const failed = totalJobs(reports);
-  const out = [COMMENT_MARKER, `### whatbroke: ${plural(failed, 'job')} failed`];
-  if (opts.runUrl) out.push('', `[Workflow run](${opts.runUrl})`);
-  for (const r of reports) {
-    const a = r.analysis;
-    out.push('', `#### ${r.url ? `[${inline(r.name)}](${r.url})` : inline(r.name)}`);
-    const base = r.baseline
-      ? ` (compared with [${r.baseline.sha.slice(0, 7)}](${r.baseline.url}) on ${code(r.baseline.branch)})`
-      : '';
-    out.push(
-      `Failed${a.failingStep ? ` in ${code(a.failingStep)}` : ''}. ${inline(summaryLine(r))}${base}.`,
-    );
-    if (r.sameAs?.length) {
-      const links = r.sameAs.map((j) => (j.url ? `[${inline(j.name)}](${j.url})` : inline(j.name)));
-      out.push('', `Same failure in ${plural(r.sameAs.length, 'more job')}: ${links.join(', ')}.`);
-    }
-    if (a.infra)
-      out.push('', `> **Looks like infrastructure:** ${inline(a.infra.kind)}. ${a.infra.advice}`);
-    for (const b of a.blocks) {
-      out.push(
-        '',
-        `<sub>${inline(blockTitle(b))}</sub>`,
-        '',
-        fence(b.lines.map((l) => l.text).join('\n')),
-      );
-    }
-    if (a.hiddenBlocks)
-      out.push('', `<sub>${plural(a.hiddenBlocks, 'more block')} of new lines not shown.</sub>`);
-  }
-  out.push(
+  const head = [COMMENT_MARKER, `### whatbroke: ${plural(failed, 'job')} failed`];
+  if (opts.runUrl) head.push('', `[Workflow run](${opts.runUrl})`);
+  const foot = [
     '',
     '<sub>Lines that were already in the last passing run are left out. [whatbroke](https://github.com/mintwork/whatbroke)</sub>',
+  ];
+  let size = head.join('\n').length + foot.join('\n').length + 400;
+  const sections: string[] = [];
+  const left: JobReport[] = [];
+  for (const r of reports) {
+    const section = markdownJob(r).join('\n');
+    if (left.length || size + section.length > MAX_COMMENT) {
+      left.push(r);
+      continue;
+    }
+    sections.push(section);
+    size += section.length;
+  }
+  if (left.length) {
+    const names = left
+      .map((r) => (r.url ? `[${inline(r.name)}](${r.url})` : inline(r.name)))
+      .join(', ');
+    sections.push(
+      `\n<sub>Not shown, to keep this comment within GitHub's size limit: ${names}.</sub>`,
+    );
+  }
+  return `${[...head, ...sections, ...foot].join('\n')}\n`;
+}
+
+function markdownJob(r: JobReport): string[] {
+  const a = r.analysis;
+  const out = ['', `#### ${r.url ? `[${inline(r.name)}](${r.url})` : inline(r.name)}`];
+  const base = r.baseline
+    ? ` (compared with [${r.baseline.sha.slice(0, 7)}](${r.baseline.url}) on ${code(r.baseline.branch)})`
+    : '';
+  out.push(
+    `Failed${a.failingStep ? ` in ${code(a.failingStep)}` : ''}. ${inline(summaryLine(r))}${base}.`,
   );
-  return `${out.join('\n')}\n`;
+  if (r.sameAs?.length) {
+    const links = r.sameAs.map((j) => (j.url ? `[${inline(j.name)}](${j.url})` : inline(j.name)));
+    out.push('', `Same failure in ${plural(r.sameAs.length, 'more job')}: ${links.join(', ')}.`);
+  }
+  if (a.infra)
+    out.push('', `> **Looks like infrastructure:** ${inline(a.infra.kind)}. ${a.infra.advice}`);
+  for (const b of a.blocks) {
+    out.push(
+      '',
+      `<sub>${inline(blockTitle(b))}</sub>`,
+      '',
+      fence(b.lines.map((l) => clip(l.text)).join('\n')),
+    );
+  }
+  if (a.hiddenBlocks)
+    out.push('', `<sub>${plural(a.hiddenBlocks, 'more block')} of new lines not shown.</sub>`);
+  return out;
 }
 
 // --- Coding agents -------------------------------------------------------------------------
@@ -187,7 +221,7 @@ export function formatAgent(reports: JobReport[]): string {
       out.push(`Likely infrastructure (${a.infra.kind}), not the code. ${a.infra.advice}`);
     for (const b of a.blocks) {
       out.push(`--- ${blockTitle(b)}`);
-      for (const l of b.lines) out.push(`${l.n}: ${l.text}`);
+      for (const l of b.lines) out.push(`${l.n}: ${clip(l.text)}`);
     }
     if (a.hiddenBlocks)
       out.push(`(${plural(a.hiddenBlocks, 'more block')} of new lines not shown)`);

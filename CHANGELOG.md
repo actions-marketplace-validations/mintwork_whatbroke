@@ -5,6 +5,10 @@
 - A matrix failing the same way is shown once, with "Same failure in N more jobs" (found in a live
   test: six identical failures made six copies of the same block in the PR comment).
 - Up to 8 failed jobs per run are analyzed (was 5).
+- The PR comment stays within GitHub's size limit: very long lines (minified or base64) are cut,
+  and jobs that don't fit are listed instead of making the comment fail.
+- A run with nothing to explain (it passed, or failed before any job ran) exits cleanly instead
+  of failing the whatbroke job.
 
 ## 0.1.0
 

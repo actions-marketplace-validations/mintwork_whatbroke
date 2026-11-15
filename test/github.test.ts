@@ -207,3 +207,23 @@ describe('groupSameFailures', () => {
     expect(grouped).toHaveLength(2);
   });
 });
+
+describe('comment size', () => {
+  it('stays within GitHub’s limit, and says what it left out', () => {
+    const huge = 'x'.repeat(5000);
+    const log = [
+      '##[group]Run build',
+      ...Array.from({ length: 40 }, (_, i) => `Error ${i}: ${huge}`),
+      '##[error]boom',
+    ].join('\n');
+    const reports = Array.from({ length: 12 }, (_, i) => ({
+      name: `job ${i}`,
+      analysis: analyze(log.replaceAll('Error', `Error${i}`), '##[group]Run build'),
+    }));
+    const md = formatMarkdown(reports);
+    expect(md.length).toBeLessThan(65_536);
+    expect(md).toContain('more characters)');
+    expect(md).toContain('Not shown, to keep this comment within GitHub');
+    expect(formatAgent(reports)).not.toContain(huge);
+  });
+});
