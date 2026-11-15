@@ -1,6 +1,6 @@
 {
   "name": "@mintwork/whatbroke",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Why did CI fail? Shows only the log lines that weren't in the last passing run. For PR comments, terminals and coding agents.",
   "keywords": [
     "ci",

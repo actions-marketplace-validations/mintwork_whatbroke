@@ -227,3 +227,13 @@ describe('comment size', () => {
     expect(formatAgent(reports)).not.toContain(huge);
   });
 });
+
+describe('commenting without permission', () => {
+  it('reports a read-only token as a 403 GitHubError the CLI can tolerate', async () => {
+    const { gh } = fakeApi({ '/repos/acme/api/issues/7/comments?per_page=100&page=1': [] });
+    // POST isn't routed in the fake API, so it answers 404, like a token that can't see the PR.
+    await expect(gh.upsertComment(repo, 7, COMMENT_MARKER, 'x')).rejects.toMatchObject({
+      status: 404,
+    });
+  });
+});

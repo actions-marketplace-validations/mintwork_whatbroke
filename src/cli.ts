@@ -226,8 +226,17 @@ export async function main(argv: string[]): Promise<number> {
     if (values.comment) {
       const pr = await gh.pullRequestFor(repo, run);
       if (pr) {
-        const done = await gh.upsertComment(repo, pr, COMMENT_MARKER, md);
-        process.stderr.write(`whatbroke: ${done} the comment on #${pr}\n`);
+        try {
+          const done = await gh.upsertComment(repo, pr, COMMENT_MARKER, md);
+          process.stderr.write(`whatbroke: ${done} the comment on #${pr}\n`);
+        } catch (e) {
+          // Runs triggered by Dependabot (and some fork setups) get a read-only token. The result
+          // is still in the output and the job summary; that's no reason to fail the job.
+          if (!(e instanceof GitHubError) || (e.status !== 403 && e.status !== 404)) throw e;
+          process.stderr.write(
+            `whatbroke: not allowed to comment on #${pr} (${e.status}); the token needs pull-requests: write. Runs started by Dependabot only get a read-only token, so see the job summary instead.\n`,
+          );
+        }
       } else process.stderr.write('whatbroke: no pull request for this run, so no comment\n');
     }
   }
